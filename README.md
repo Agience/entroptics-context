@@ -4,7 +4,7 @@
 [![Licence: AGPL-3.0-only or commercial](https://img.shields.io/badge/licence-AGPL--3.0--only%20or%20commercial-blue)](LICENSE)
 [![PyPI](https://img.shields.io/pypi/v/entroptics-llm)](https://pypi.org/project/entroptics-llm/)
 [![Python](https://img.shields.io/pypi/pyversions/entroptics-llm)](https://pypi.org/project/entroptics-llm/)
-[![Paper](https://img.shields.io/badge/paper-PDF-b31b1b)](research/PAPER.pdf)
+[![Paper](https://img.shields.io/badge/paper-PDF-b31b1b)](https://github.com/Agience/entroptics-llm/blob/main/research/PAPER.pdf)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.22313961.svg)](https://doi.org/10.5281/zenodo.22313961)
 [![Sponsor](https://img.shields.io/badge/sponsor-Agience-ea4aaa?logo=githubsponsors)](https://github.com/sponsors/Agience)
 
@@ -70,8 +70,9 @@ python -m research.benchmarks.bench_injection
 python -m research.benchmarks.bench_drift
 ```
 
-`research/PAPER.md` has the construction, the real-corpus results on BEIR and HotpotQA, and
-every number with what it was measured on.
+[`research/PAPER.pdf`](https://github.com/Agience/entroptics-llm/blob/main/research/PAPER.pdf) has the
+construction, the real-corpus results on BEIR and HotpotQA, and every number with what it was measured on
+(the same text in Markdown is [`research/PAPER.md`](https://github.com/Agience/entroptics-llm/blob/main/research/PAPER.md)).
 
 ## Use it
 
@@ -113,7 +114,8 @@ pip install -e ".[bench]"    # + encoders and datasets, for research/benchmarks/
 
 ```
 research/
-  PAPER.md        the write-up, and every number with what it was measured on.
+  PAPER.pdf       the paper, typeset.
+  PAPER.md        the same write-up in markdown, and every number with what it was measured on.
   benchmarks/
     bench_injection   locating a real injection, against source count.
     bench_drift       on-topic decision, against source count.
@@ -152,7 +154,8 @@ Every spectral read reaches [`entroptics`](https://github.com/Agience/entroptics
 [`engine.py`](src/entroptics_llm/engine.py); nothing else imports the library and a test
 enforces it. The resolved-mode count that sets `K` is the library's own read — the singular
 values standing above a noise floor derived from the data rather than assumed. See
-`research/PAPER.md` for the citation and the construction.
+[`research/PAPER.pdf`](https://github.com/Agience/entroptics-llm/blob/main/research/PAPER.pdf) for the
+citation and the construction.
 
 Security issues: email **connect@agience.ai** rather than opening a public issue.
 
