@@ -1,0 +1,21 @@
+[project]
+name = "entroptics-llm"
+version = "0.1.1"
+description = "Renamed: this package is now entroptics-context."
+readme = "README.md"
+license = "AGPL-3.0-only"
+requires-python = ">=3.11"
+authors = [{ name = "Ikailo Inc." }]
+dependencies = ["entroptics-context>=0.2.0"]
+classifiers = ["Development Status :: 7 - Inactive"]
+
+[project.urls]
+Homepage = "https://github.com/Agience/entroptics-context"
+"New package" = "https://pypi.org/project/entroptics-context/"
+
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.package-dir]
+"" = "src"
