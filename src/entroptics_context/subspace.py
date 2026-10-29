@@ -75,7 +75,7 @@ def coherent_basis(E):
     Whitening subtracts each coordinate's median, and for a set of embeddings the shared
     mean direction *is* the topic — the leading coherent mode — so removing it would
     delete the thing being asked about. The rank still comes from the whitened frame,
-    where the noise floor is meaningful; see :mod:`entroptics_llm.engine`.
+    where the noise floor is meaningful; see :mod:`entroptics_context.engine`.
     """
     E = np.asarray(E, dtype=np.float64)
     if E.ndim != 2 or min(E.shape) < 2:

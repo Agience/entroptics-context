@@ -332,10 +332,10 @@ Answering*, EMNLP 2018.
 ## Citation
 
 ```bibtex
-@techreport{ikailo2026entropticsllm,
+@techreport{ikailo2026entropticscontext,
   title  = {Selection for language-model context, read from the data},
   author = {{Ikailo Inc.}},
   year   = {2026},
-  note   = {https://github.com/Agience/entroptics-llm}
+  note   = {https://github.com/Agience/entroptics-context}
 }
 ```

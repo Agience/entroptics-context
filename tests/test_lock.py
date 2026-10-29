@@ -2,8 +2,8 @@
 import numpy as np
 import pytest
 
-from entroptics_llm.engine import CutUnavailable
-from entroptics_llm.lock import gap_split, top_break
+from entroptics_context.engine import CutUnavailable
+from entroptics_context.lock import gap_split, top_break
 
 
 def test_gap_split_cuts_at_the_largest_relative_drop():
@@ -102,7 +102,7 @@ def test_a_ratio_within_the_arithmetics_own_round_off_is_not_a_break():
 
 
 def test_the_tolerance_is_read_off_the_dtype_not_asserted():
-    from entroptics_llm.engine import machine_eps
+    from entroptics_context.engine import machine_eps
     assert machine_eps(np.zeros(3, dtype=np.float64)) == np.finfo(np.float64).eps
     assert machine_eps(np.zeros(3, dtype=np.float32)) == np.finfo(np.float32).eps
 

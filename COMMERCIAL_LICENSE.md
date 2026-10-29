@@ -2,7 +2,7 @@
 
 # Commercial Licensing
 
-**Entroptics LLM** is distributed under the **GNU Affero General Public License v3.0**
+**Entroptics Context** is distributed under the **GNU Affero General Public License v3.0**
 (AGPL-3.0-only). See [LICENSE](LICENSE).
 
 A commercial license is available for use cases that are incompatible with the AGPL, or that involve
@@ -17,10 +17,10 @@ source code available under the same license. A commercial license removes that 
 
 **You need a commercial license if any of the following apply:**
 
-- You modify Entroptics LLM and want to keep those modifications proprietary (closed-source)
-- You offer Entroptics LLM as a managed or hosted service to third parties without releasing your
+- You modify Entroptics Context and want to keep those modifications proprietary (closed-source)
+- You offer Entroptics Context as a managed or hosted service to third parties without releasing your
   source code
-- You embed or OEM Entroptics LLM inside a product and do not wish to release that product's source
+- You embed or OEM Entroptics Context inside a product and do not wish to release that product's source
   under the AGPL
 - You want enterprise support, SLA, compliance, or custom deployment rights
 
@@ -65,8 +65,8 @@ Commercial deals differ by use case:
 - **Self-host** — proprietary modifications, internal enterprise deployment without AGPL source
   release
 - **White-label** — branding rights (trademark license) plus optional copyleft opt-out
-- **OEM / embedded** — distribution rights for embedding Entroptics LLM inside another product
-- **Hosted service** — operating Entroptics LLM as a managed service for third parties
+- **OEM / embedded** — distribution rights for embedding Entroptics Context inside another product
+- **Hosted service** — operating Entroptics Context as a managed service for third parties
 
 Each shape has different rights, support, branding, and commercial terms.
 

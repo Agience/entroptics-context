@@ -33,8 +33,8 @@ import json
 
 import numpy as np
 
-from entroptics_llm import coherent_basis, in_subspace_fraction
-from entroptics_llm.engine import CutUnavailable
+from entroptics_context import coherent_basis, in_subspace_fraction
+from entroptics_context.engine import CutUnavailable
 from research.benchmarks.bench_injection import articles, auroc, boot
 
 DEFAULT_ENCODER = "BAAI/bge-small-en-v1.5"

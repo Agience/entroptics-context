@@ -38,8 +38,8 @@ import re
 
 import numpy as np
 
-from entroptics_llm import anomaly, coherent_basis
-from entroptics_llm.engine import CutUnavailable
+from entroptics_context import anomaly, coherent_basis
+from entroptics_context.engine import CutUnavailable
 
 DEFAULT_ENCODER = "BAAI/bge-small-en-v1.5"
 _SENTENCE = re.compile(r"(?<=[.!?])\s+")

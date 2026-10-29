@@ -12,7 +12,7 @@ Quick start
 -----------
 ::
 
-    from entroptics_llm import coherent_basis, most_anomalous, coherence
+    from entroptics_context import coherent_basis, most_anomalous, coherence
 
     V, K = coherent_basis(context_embeddings)    # the K directions the context resolves
     suspect = most_anomalous(context_embeddings) # the item furthest outside them
@@ -59,7 +59,7 @@ from .subspace import (
     subspace_overlap,
 )
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"
 
 __all__ = [
     # modules

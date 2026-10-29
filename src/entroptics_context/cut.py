@@ -182,7 +182,7 @@ def head_screen(item_embs, query_emb, heads: int) -> np.ndarray:
 def signal_power(W) -> np.ndarray:
     """``(n,)`` — each item's energy in the screen's signal modes.
 
-    Delegates to :func:`entroptics_llm.engine.raw_signal_power`; see that docstring for
+    Delegates to :func:`entroptics_context.engine.raw_signal_power`; see that docstring for
     why this substrate keeps its raw magnitudes while the KV substrate does not.
     """
     return engine.raw_signal_power(W)
@@ -224,7 +224,7 @@ def select(item_embs, query_emb, heads: int | None = None) -> np.ndarray:
     """The adaptive cut: which of ``item_embs`` to keep for ``query_emb``, as indices.
 
     ``heads`` is derived from the data when ``None``; pass an int only to override.
-    The lock is :func:`~entroptics_llm.lock.top_break` on the per-item signal power —
+    The lock is :func:`~entroptics_context.lock.top_break` on the per-item signal power —
     the top cluster above the largest relative gap — so there is no fixed k, no MAD
     multiple and no threshold. The screen decides how many to keep, which is the entire
     difference between an adaptive cut and a top-k with extra steps.
@@ -340,7 +340,7 @@ def select_by_cosine(item_embs, query_emb) -> np.ndarray:
     """Which of a candidate horizon to keep for this query. Returns ascending indices.
 
     The count is read from the candidates' own similarity spectrum: cut at the largest
-    relative gap at or above the median (:func:`~entroptics_llm.lock.top_break`). No fixed
+    relative gap at or above the median (:func:`~entroptics_context.lock.top_break`). No fixed
     *k*, no similarity threshold, nothing fitted to a corpus, and no additional model call —
     the similarities are ones the retriever already computed.
 

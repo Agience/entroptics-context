@@ -2,9 +2,9 @@
 import numpy as np
 import pytest
 
-from entroptics_llm import cosine_salience, select_by_cosine
-from entroptics_llm.engine import CutUnavailable
-from entroptics_llm.lock import top_break
+from entroptics_context import cosine_salience, select_by_cosine
+from entroptics_context.engine import CutUnavailable
+from entroptics_context.lock import top_break
 
 
 def horizon(rng, n=40, d=64, planted=(2, 11, 29), strength=6.0):

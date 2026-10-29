@@ -8,12 +8,12 @@ authors:
     family-names: Sessford
     email: john@ikailo.com
     affiliation: Ikailo
-repository-code: "https://github.com/Agience/entroptics-llm"
+repository-code: "https://github.com/Agience/entroptics-context"
 url: "https://agience.ai"
 license: AGPL-3.0-only
-version: 0.1.0
+version: 0.2.0
 doi: "10.5281/zenodo.22313961"
-date-released: "2026-09-04"
+date-released: "2026-10-29"
 keywords:
   - retrieval-augmented generation
   - context selection

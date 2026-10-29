@@ -1,4 +1,4 @@
-# Contributing to Entroptics LLM
+# Contributing to Entroptics Context
 
 ## Contributing
 

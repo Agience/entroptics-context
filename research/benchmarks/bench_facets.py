@@ -29,8 +29,8 @@ import argparse
 
 import numpy as np
 
-from entroptics_llm.cut import signal_power
-from entroptics_llm.lock import top_break
+from entroptics_context.cut import signal_power
+from entroptics_context.lock import top_break
 
 
 def facet_screen(rng, n, H, R, n_gold, distractor=0.22, noise=0.04):

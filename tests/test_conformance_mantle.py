@@ -24,7 +24,7 @@ mantle = pytest.importorskip(
     reason="mantle is a sibling checkout; this file measures agreement with it",
 )
 
-from entroptics_llm import engine  # noqa: E402
+from entroptics_context import engine  # noqa: E402
 
 
 def horizons(rng, n=40, count=25, d=64):
@@ -98,7 +98,7 @@ def test_a_constant_level_moves_both_the_same_way():
 def test_the_head_count_that_follows_from_it_agrees():
     """Agreement matters because it reaches the selection. The head count is
     ``round(occupancy * n)``, so a divergence in the fraction becomes a different screen."""
-    from entroptics_llm.cut import derive_heads
+    from entroptics_context.cut import derive_heads
     rng = np.random.default_rng(3)
     for E in horizons(rng, count=15):
         theirs = int(max(2, min(64, round(float(mantle.occupancy_fraction(

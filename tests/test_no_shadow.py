@@ -9,7 +9,7 @@ import pathlib
 
 import pytest
 
-SRC = pathlib.Path(__file__).resolve().parents[1] / "src" / "entroptics_llm"
+SRC = pathlib.Path(__file__).resolve().parents[1] / "src" / "entroptics_context"
 RESEARCH = pathlib.Path(__file__).resolve().parents[1] / "research"
 
 #: The one module allowed to import the library.
@@ -51,7 +51,7 @@ def test_only_the_seam_imports_the_library():
     }
     assert not offenders, (
         f"{sorted(offenders)} import `entroptics` directly. Route the read through "
-        f"`entroptics_llm.engine`, or add the module to ALLOWED with its reason."
+        f"`entroptics_context.engine`, or add the module to ALLOWED with its reason."
     )
 
 

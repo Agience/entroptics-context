@@ -200,7 +200,7 @@ def machine_eps(ref) -> float:
 
     Delegates to ``entroptics.entropy.macheps``, which is the library's own answer and
     follows the backend and the compute precision. It is exposed through this seam because
-    :mod:`entroptics_llm.lock` needs it — a ratio of two computed numbers is not a drop
+    :mod:`entroptics_context.lock` needs it — a ratio of two computed numbers is not a drop
     unless it clears the round-off of the computation that produced them — and the lock
     does not import the library.
 

@@ -53,12 +53,12 @@ RULES = [
     ),
     (
         r"\bentroptics[_\- ]cut\b",
-        "The package is `entroptics_llm`. A stale name in prose sends a reader to an "
+        "The package is `entroptics_context`. A stale name in prose sends a reader to an "
         "import that does not exist.",
         (),
     ),
     (
-        r"\.attention\b|entroptics_llm\.attention|kv_cut|kv_cache_adapter|bench_kv_|"
+        r"\.attention\b|entroptics_context\.attention|kv_cut|kv_cache_adapter|bench_kv_|"
         r"bench_grounding|bench_rank_instrument|bench_repair|"
         r"research/negatives",
         "These modules and benchmarks were removed when the package was narrowed to its "
@@ -128,7 +128,7 @@ def test_the_guard_can_actually_fail():
         (1, "mantle.search.beacon.engine is the numpy-only implementation", False),
         (2, "import entroptics_cut as e", True),
         (2, "# Contributing to Entroptics Cut", True),
-        (2, "import entroptics_llm as e", False),
+        (2, "import entroptics_context as e", False),
         (3, "see research/benchmarks/bench_kv_recall.py", True),
         (3, "see research/benchmarks/bench_injection.py", False),
     ]

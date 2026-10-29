@@ -1,10 +1,10 @@
-# entroptics-llm
+# entroptics-context
 
-[![CI](https://github.com/Agience/entroptics-llm/actions/workflows/ci.yml/badge.svg)](https://github.com/Agience/entroptics-llm/actions/workflows/ci.yml)
+[![CI](https://github.com/Agience/entroptics-context/actions/workflows/ci.yml/badge.svg)](https://github.com/Agience/entroptics-context/actions/workflows/ci.yml)
 [![Licence: AGPL-3.0-only or commercial](https://img.shields.io/badge/licence-AGPL--3.0--only%20or%20commercial-blue)](LICENSE)
-[![PyPI](https://img.shields.io/pypi/v/entroptics-llm)](https://pypi.org/project/entroptics-llm/)
-[![Python](https://img.shields.io/pypi/pyversions/entroptics-llm)](https://pypi.org/project/entroptics-llm/)
-[![Paper](https://img.shields.io/badge/paper-PDF-b31b1b)](https://github.com/Agience/entroptics-llm/blob/main/research/PAPER.pdf)
+[![PyPI](https://img.shields.io/pypi/v/entroptics-context)](https://pypi.org/project/entroptics-context/)
+[![Python](https://img.shields.io/pypi/pyversions/entroptics-context)](https://pypi.org/project/entroptics-context/)
+[![Paper](https://img.shields.io/badge/paper-PDF-b31b1b)](https://github.com/Agience/entroptics-context/blob/main/research/PAPER.pdf)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.22313961.svg)](https://doi.org/10.5281/zenodo.22313961)
 [![Sponsor](https://img.shields.io/badge/sponsor-Agience-ea4aaa?logo=githubsponsors)](https://github.com/sponsors/Agience)
 
@@ -70,14 +70,14 @@ python -m research.benchmarks.bench_injection
 python -m research.benchmarks.bench_drift
 ```
 
-[`research/PAPER.pdf`](https://github.com/Agience/entroptics-llm/blob/main/research/PAPER.pdf) has the
+[`research/PAPER.pdf`](https://github.com/Agience/entroptics-context/blob/main/research/PAPER.pdf) has the
 construction, the real-corpus results on BEIR and HotpotQA, and every number with what it was measured on
-(the same text in Markdown is [`research/PAPER.md`](https://github.com/Agience/entroptics-llm/blob/main/research/PAPER.md)).
+(the same text in Markdown is [`research/PAPER.md`](https://github.com/Agience/entroptics-context/blob/main/research/PAPER.md)).
 
 ## Use it
 
 ```python
-from entroptics_llm import coherent_basis, in_subspace_fraction, most_anomalous, coherence
+from entroptics_context import coherent_basis, in_subspace_fraction, most_anomalous, coherence
 
 V, K = coherent_basis(context_embeddings)      # the K directions the context resolves
 suspect = most_anomalous(context_embeddings)   # the item furthest outside them
@@ -95,7 +95,7 @@ distribution, so a caller wanting a yes/no supplies its own null.
 ## Install
 
 ```bash
-pip install entroptics-llm
+pip install entroptics-context
 ```
 
 Runtime dependencies are **numpy and [`entroptics`](https://pypi.org/project/entroptics/)**,
@@ -122,7 +122,7 @@ research/
     bench_facets      the budget's win condition: relevance across R facets.
     bench_beir        the budget on real BEIR corpora, where relevance is unimodal.
     bench_hotpot_e2e  end to end with a language model answering.
-src/entroptics_llm/
+src/entroptics_context/
   engine.py       the one seam onto `entroptics`. Nothing else imports it.
   subspace.py     coherent basis, in-subspace fraction, anomaly, coherence.
   lock.py         gap_split / top_break — where a salience spectrum stops.
@@ -151,10 +151,10 @@ Use it for off-source and lost-thread monitoring, not as a fact checker.
 ## Built on entroptics
 
 Every spectral read reaches [`entroptics`](https://github.com/Agience/entroptics) through one module,
-[`engine.py`](src/entroptics_llm/engine.py); nothing else imports the library and a test
+[`engine.py`](src/entroptics_context/engine.py); nothing else imports the library and a test
 enforces it. The resolved-mode count that sets `K` is the library's own read — the singular
 values standing above a noise floor derived from the data rather than assumed. See
-[`research/PAPER.pdf`](https://github.com/Agience/entroptics-llm/blob/main/research/PAPER.pdf) for the
+[`research/PAPER.pdf`](https://github.com/Agience/entroptics-context/blob/main/research/PAPER.pdf) for the
 citation and the construction.
 
 Security issues: email **connect@agience.ai** rather than opening a public issue.

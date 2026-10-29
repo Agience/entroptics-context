@@ -1,8 +1,8 @@
 [project]
-name = "entroptics-llm"
+name = "entroptics-context"
 license = "AGPL-3.0-only"
 license-files = ["LICENSE", "NOTICE", "COMMERCIAL_LICENSE.md"]
-version = "0.1.0"
+version = "0.2.0"
 description = "Read a multi-source LLM context as the subspace it resolves, not as a centroid: locate prompt injections and off-source answers, with no trained model and no tuned constant."
 readme = "README.md"
 requires-python = ">=3.11"
@@ -27,9 +27,9 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/Agience/entroptics-llm"
-Source = "https://github.com/Agience/entroptics-llm"
-Issues = "https://github.com/Agience/entroptics-llm/issues"
+Homepage = "https://github.com/Agience/entroptics-context"
+Source = "https://github.com/Agience/entroptics-context"
+Issues = "https://github.com/Agience/entroptics-context/issues"
 Instrument = "https://pypi.org/project/entroptics/"
 
 [project.optional-dependencies]
@@ -55,10 +55,10 @@ build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
 where = ["src"]
-include = ["entroptics_llm*"]
+include = ["entroptics_context*"]
 
 [tool.setuptools.package-data]
-entroptics_llm = ["py.typed"]
+entroptics_context = ["py.typed"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

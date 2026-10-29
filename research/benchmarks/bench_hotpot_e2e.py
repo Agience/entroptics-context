@@ -48,7 +48,7 @@ import string
 
 import numpy as np
 
-from entroptics_llm import coherence, most_anomalous, select_with_info
+from entroptics_context import coherence, most_anomalous, select_with_info
 
 DEFAULT_MODEL = "Qwen/Qwen2.5-1.5B-Instruct"
 DEFAULT_ENCODER = "BAAI/bge-small-en-v1.5"

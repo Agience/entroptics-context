@@ -2,7 +2,7 @@
 
 # Contributor License Agreement
 
-**Entroptics LLM — Ikailo Inc.**
+**Entroptics Context — Ikailo Inc.**
 
 Version 1.1 | Effective: 2026-08-25
 
@@ -83,7 +83,7 @@ By submitting a Contribution, you represent that:
 
 ## 5. Inbound = Outbound
 
-Entroptics LLM is distributed under the **AGPL-3.0-only** license — see [LICENSE](LICENSE).
+Entroptics Context is distributed under the **AGPL-3.0-only** license — see [LICENSE](LICENSE).
 
 You understand and agree that Ikailo Inc. may license your Contribution under that license, under a
 commercial license (see [COMMERCIAL_LICENSE.md](COMMERCIAL_LICENSE.md)), or under any other terms

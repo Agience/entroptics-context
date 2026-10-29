@@ -24,7 +24,7 @@ keep?*
 ``cosine+lock`` is the baseline that matters and the one a published +0.038 edge was
 once wrong about: that gap was the *lock*, not the screen, because the two sides were
 running different locks. Here both sides run
-:func:`~entroptics_llm.lock.top_break` on a non-negative salience, and the only
+:func:`~entroptics_context.lock.top_break` on a non-negative salience, and the only
 difference between them is the screen.
 
 Negative cosines are clipped at 0 for the baseline's salience, which is exactly what
@@ -61,8 +61,8 @@ from collections import defaultdict
 
 import numpy as np
 
-from entroptics_llm import select_with_info
-from entroptics_llm.lock import top_break
+from entroptics_context import select_with_info
+from entroptics_context.lock import top_break
 
 #: `scidocs` is here because the head/tail claim needed a corpus whose queries are
 #: ACTUALLY multi-document: nearly every one of its 1,000 queries carries four or more relevant
