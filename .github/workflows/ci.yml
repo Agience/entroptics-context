@@ -1,7 +1,7 @@
 name: CI
 
-# This is NOT the workspace's own CI. The agience workspace runs `ci_runner.py` from a
-# post-receive hook on the NAS, and that is what gates a change internally. This file
+# This is NOT the workspace's own CI. The agience workspace runs `ci_runner.py` from an
+# internal post-receive hook, and that is what gates a change internally. This file
 # exists because the repository is public and dual-licensed: an outside contributor opening
 # a pull request has no access to that runner, and a PR nothing checks is a PR nobody can
 # review with confidence.

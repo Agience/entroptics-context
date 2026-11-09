@@ -8,11 +8,12 @@ instruction and a genuinely new source are the same object read with opposite si
 a mode off the shared structure.
 
 The advantage over a cosine-to-centroid grows with the number of sources the context
-spans, and there is none at one: a centroid points one way, and a context assembled from
+spans, and is smallest at one: a centroid points one way, and a context assembled from
 several documents does not. Measured on real attack strings
-(`deepset/prompt-injections`) planted in wikitext-103 articles, AUROC 0.907 against the
-centroid's 0.733 at five sources; on the on-topic decision, 0.872 against 0.717. Top-1
-localisation leads at every source count, 0.160 against 0.053 at five.
+(`deepset/prompt-injections`) planted in wikitext-103 articles, AUROC 0.897 against the
+centroid's 0.718 at five sources; on the on-topic decision, 0.879 against 0.738. Its top-1
+rate is the highest of the three reads at every source count (point estimates), 0.140
+against the centroid's 0.030 at five.
 research/PAPER.md has the construction and the conditions.
 
 What this is not
@@ -22,7 +23,7 @@ coherent, because staying on a subject and being right about it are different
 properties and only the first is visible in the geometry. Use it for off-source and
 lost-thread monitoring. Do not pitch it as a factual abstain signal.
 
-**Anomaly is a score and a localisation.** It exposes no binary "does this set contain a
+**Anomaly is a score and a localization.** It exposes no binary "does this set contain a
 foreign item". From one set alone that is ill-posed —
 the most peripheral legitimate item of a clean multi-topic set and a genuinely foreign
 item of an easier set carry overlapping absolute anomaly. What is exposed is the
@@ -30,10 +31,10 @@ per-item score, the ranking, and the top-1 "inspect this first". A calibrated bi
 decision needs a reference distribution of known-clean anomalies, which the caller
 supplies; :func:`anomaly_z` is that form.
 
-Each item is scored against the subspace of the set **without it**, because scoring it
-against a subspace it helped define inverts the read on exactly the item you were
-looking for. :func:`anomaly` carries the measurement. The fast in-set read is still
-reachable, and is what the published AUROC was measured with.
+Each item is scored against the subspace of the set **without it**, so it is never read
+against a mode it supplied; :func:`anomaly` gives the reason and what each read scores.
+The fast in-set read is reachable with ``leave_one_out=False``. The injection AUROC
+figures above are measured with the default.
 """
 from __future__ import annotations
 
@@ -67,15 +68,18 @@ def coherent_basis(E):
     """``(V, K)`` — the coherent subspace of a row-set ``E`` ``(n, d)``.
 
     ``V`` is ``(d, K)`` with orthonormal columns: the top-``K`` right singular
-    directions of the direction-normalised set, ``K`` being the engine's resolved-mode
-    count. Rows are normalised to unit length first so the subspace is set by where the
+    directions of the direction-normalized set, ``K`` being the engine's resolved-mode
+    count. Rows are normalized to unit length first so the subspace is set by where the
     items point, not by which of them happens to have the largest norm.
 
-    The modes are taken off the normalised set as given rather than the whitened frame.
-    Whitening subtracts each coordinate's median, and for a set of embeddings the shared
+    The modes are taken off the normalized set as given rather than the whitened frame.
+    Whitening centres each coordinate on its mean, and for a set of embeddings the shared
     mean direction *is* the topic — the leading coherent mode — so removing it would
     delete the thing being asked about. The rank still comes from the whitened frame,
-    where the noise floor is meaningful; see :mod:`entroptics_context.engine`.
+    where the noise floor is meaningful (see :mod:`entroptics_context.engine`), so it
+    counts directions about the mean: from three clean orthogonal topics up, ``T``
+    topics give ``T - 1``. ``research/PAPER.md`` appendix A.1 shows the anomaly reads
+    under that count.
     """
     E = np.asarray(E, dtype=np.float64)
     if E.ndim != 2 or min(E.shape) < 2:
@@ -101,7 +105,7 @@ def subspace_overlap(V_a, V_b) -> float:
     """``[0, 1]`` — how much of subspace ``V_a`` is covered by subspace ``V_b``.
 
     ``||V_a^T V_b||_F^2 / k_a``: the mean squared principal cosine between the two, a
-    subspace-to-subspace generalisation of :func:`in_subspace_fraction`. Use it when
+    subspace-to-subspace generalization of :func:`in_subspace_fraction`. Use it when
     both sides are sets — one context's sources against another's, or the same context
     before and after a turn.
 
@@ -147,31 +151,19 @@ def anomaly(cand_embs, *, leave_one_out: bool = True) -> np.ndarray:
 
     High = a foreign mode off the shared structure.
 
-    Each item is scored against the subspace of the set **without it**. That is the
-    default because the alternative inverts, and not rarely.
+    Each item is scored against the subspace of the set **without it**, so the span an
+    item is read against never contains a mode that item supplied. That structural
+    argument is the reason for the default.
 
-    Why the in-set read inverts
-    ---------------------------
-    Reading an item against a subspace **the item itself helped define** means an item
-    foreign enough to clear the noise floor on its own becomes its own coherent mode and
-    reads as maximally *normal*. The read does not weaken; it flips. Measured, one
-    injected item in a clean multi-topic set, 15 draws, top-1 localisation:
+    On clean synthetic sets of three or more orthogonal topics the count falls one short
+    (it is read on the whitened frame, which centres on the mean), and there the in-set
+    read's top-1 rate is at or above leave-one-out's in every cell measured. In the cells
+    where leave-one-out trails, some other item reads almost wholly outside the span built
+    without it. ``research/PAPER.md`` appendix
+    A.1 has the tables and ``research/benchmarks/bench_leave_one_out.py`` produces them.
 
-        injected item is        1 topic   3 topics   5 topics
-        70% off the topics       1.00       1.00       1.00      (both reads)
-        90% off                  1.00       0.80       1.00      in-set
-                                 1.00       1.00       1.00      leave-one-out
-        fully orthogonal         1.00       0.07       1.00      in-set
-                                 1.00       1.00       1.00      leave-one-out
-
-    Note it is **not monotone in foreignness or in topic count** — it depends on whether
-    the resolved rank happens to reach the outlier's own mode, which a caller cannot
-    predict from anything they can see. Leave-one-out scored 1.00 in every cell, so it is
-    not a trade: it never lost. ``research/PAPER.md`` appendix A carries this table.
-
-    ``leave_one_out=False`` is the fast read — real injections are text, they land inside
-    the embedder's cone, and a partial outlier does not earn a mode. Pass it when latency
-    rules and the set is known not to contain a hard outlier.
+    ``leave_one_out=False`` is the fast read: one decomposition instead of ``n``. Pass it
+    when latency rules.
 
     Cost: ``n`` decompositions instead of one. Measured — n=20 d=384: 3.3 ms vs 59 ms
     (18x); n=40 d=384: 8.4 ms vs 287 ms (34x); and the gap widens with n.
@@ -199,7 +191,7 @@ def anomaly_rank(cand_embs, *, leave_one_out: bool = True) -> np.ndarray:
 def most_anomalous(cand_embs, *, leave_one_out: bool = True):
     """The index of the single most anomalous item, or ``None`` for an empty set.
 
-    Top-1 localisation — which item to inspect first. Not a verdict that the set
+    Top-1 localization — which item to inspect first. Not a verdict that the set
     contains a foreign item; see the module docstring for why that question is not well
     posed from one set, and :func:`anomaly` for what ``leave_one_out=False`` costs.
     """
@@ -215,18 +207,18 @@ def anomaly_z(cand_embs, reference_anomalies, *, leave_one_out: bool = True) -> 
     """``(n,)`` — per-item anomaly in standard deviations above a reference distribution.
 
     ``reference_anomalies`` is a sample of :func:`anomaly` values taken over sets known
-    to be clean, from the same corpus and embedder. This is the only honest route to a
+    to be clean, from the same corpus and embedder. This is the only sound route to a
     binary decision: the caller brings the reference, sets the cut, and owns the
     false-alarm rate that follows.
 
     Raises rather than inventing a scale when the reference has none — a reference of
-    one value, or of identical values, cannot standardise anything, and returning
+    one value, or of identical values, cannot standardize anything, and returning
     zeros or infinities would read as a confident answer.
     """
     ref = np.asarray(reference_anomalies, dtype=np.float64).ravel()
     if ref.size < 2:
         raise CutUnavailable(
-            f"a reference of {ref.size} value(s) has no spread to standardise against"
+            f"a reference of {ref.size} value(s) has no spread to standardize against"
         )
     sd = float(ref.std(ddof=1))
     if sd <= 0.0:

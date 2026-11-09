@@ -2,18 +2,14 @@
 
 Why this file exists
 --------------------
-Every real-corpus retrieval number this replaced was produced by the
-**pre-repair lock** and was never re-run — the BeIR scifact and fiqa figures, the HotpotQA
-distractor result, the LongMemEval bake-off. This measures the shipped lock on real
-corpora with human judgements, which is the question a planted-facet sweep leaves open.
-
-This does. Nothing here is planted and nothing is fitted.
+This measures the shipped lock on real corpora with human judgements, which is the
+question a planted-facet sweep leaves open. Nothing here is planted and nothing is fitted.
 
 What is compared, and why it is the fair comparison
 ---------------------------------------------------
 The cut is a **reducer over a horizon**, not a retriever — the package's own scope note
-says so, and LongMemEval is the measured reason (0.28 recall against top-8's 0.74 when
-used *as* the retriever). So the horizon is fixed first, by an ordinary dense retriever,
+says so: it isolates one cluster above a gap, which under-selects when recall is what is
+wanted. So the horizon is fixed first, by an ordinary dense retriever,
 and every method below decides the same question: *of these B candidates, which do we
 keep?*
 
@@ -21,9 +17,8 @@ keep?*
     cosine+lock    the SAME parameter-free lock, applied to cosine salience
     cut            the query-relative multi-head screen, then that lock
 
-``cosine+lock`` is the baseline that matters and the one a published +0.038 edge was
-once wrong about: that gap was the *lock*, not the screen, because the two sides were
-running different locks. Here both sides run
+``cosine+lock`` is the baseline that matters: give the two sides different locks and the
+edge measures the locks, not the screen. Here both sides run
 :func:`~entroptics_context.lock.top_break` on a non-negative salience, and the only
 difference between them is the screen.
 
@@ -64,11 +59,10 @@ import numpy as np
 from entroptics_context import select_with_info
 from entroptics_context.lock import top_break
 
-#: `scidocs` is here because the head/tail claim needed a corpus whose queries are
-#: ACTUALLY multi-document: nearly every one of its 1,000 queries carries four or more relevant
-#: papers, against nfcorpus's minority tail and essentially none in scifact or
-#: arguana. A claim about wide-evidence queries tested only where wide evidence is
-#: rare is a claim tested on a handful of rows.
+#: `scidocs` is here for a corpus whose queries are multi-document by construction: each
+#: of its queries is judged against several cited papers. A claim about wide-evidence
+#: queries tested only where wide evidence is rare is a claim tested on a handful of rows;
+#: the report prints how many queries carry four or more relevant documents per corpus.
 DATASETS = ("nfcorpus", "scifact", "fiqa", "arguana", "scidocs")
 DEFAULT_MODEL = "sentence-transformers/all-MiniLM-L6-v2"
 #: A second encoder is not decoration. The headline claim is that each corpus has a
@@ -85,10 +79,10 @@ def load_beir(name: str, split: str = "test"):
     """``(doc_ids, doc_texts, query_ids, query_texts, relevant)`` from the HF mirror.
 
     ``relevant`` maps a query id to the set of doc ids judged relevant. BEIR qrels carry
-    a graded ``score``; anything ``>= 1`` is relevant, which is the standard binarisation
+    a graded ``score``; anything ``>= 1`` is relevant, which is the standard binarization
     and the one the published scifact/fiqa numbers used.
 
-    Ids are normalised to ``str`` because the mirrors are not consistent about it —
+    Ids are normalized to ``str`` because the mirrors are not consistent about it —
     nfcorpus stores them as strings and scifact as integers, and joining the two forms
     produces an empty relevant set rather than an error.
     """
@@ -180,7 +174,7 @@ def run_dataset(name, model, *, horizon, split, batch_size, min_horizon, cache_d
     methods = ["top1", "top3", "top5", "top10", "cosine+lock", "cut"]
     per_query = {m: {"h": [], "c": []} for m in methods}
     kept_n = {m: [] for m in methods}
-    horizon_recall, fell_back, found_gap, heads = [], 0, 0, []
+    horizon_recall, fell_back, found_gap, heads, in_pool_n = [], 0, 0, [], []
 
     t0 = time.time()
     for i, qid in enumerate(q_ids):
@@ -188,8 +182,7 @@ def run_dataset(name, model, *, horizon, split, batch_size, min_horizon, cache_d
         # A query may BE a corpus document — arguana's queries are arguments and the
         # gold is the counterargument, so the nearest neighbour of every query is its own
         # text. Left in, every method spends its budget on the self-match and the table
-        # measures that artifact instead of the selection: measured, top-1 scored F1
-        # 0.000 on arguana and both locks kept ~1.4 documents at F1 0.02. Excluded here
+        # measures that artifact instead of the selection. Excluded here
         # for every dataset, which is a no-op where query ids and document ids are
         # disjoint.
         self_match = doc_index.get(qid)
@@ -205,6 +198,7 @@ def run_dataset(name, model, *, horizon, split, batch_size, min_horizon, cache_d
         horizon_recall.append(len(in_pool) / len(gold))
         if not in_pool:
             continue                      # nothing to select; scores 0 for every method alike
+        in_pool_n.append(len(in_pool))
 
         pool_sims = sims[top]
         picks = {
@@ -242,6 +236,7 @@ def run_dataset(name, model, *, horizon, split, batch_size, min_horizon, cache_d
         "f1_horizon": {m: float(np.mean(v["h"])) for m, v in per_query.items()},
         "f1_corpus": {m: float(np.mean(v["c"])) for m, v in per_query.items()},
         "kept_mean": {m: float(np.mean(v)) for m, v in kept_n.items()},
+        "relevant_in_horizon": [int(x) for x in in_pool_n],
         "_paired": {m: np.asarray(v["h"], dtype=np.float64) for m, v in per_query.items()},
     }
 
@@ -301,6 +296,35 @@ def report(results, *, model_name, seed):
         print(f"{r['dataset']:10s} {r['f1_horizon']['cut']:11.3f} "
               f"{r['f1_horizon']['cosine+lock']:10.3f} {e:+9.3f} "
               f"[{lo:+.3f}, {hi:+.3f}]".ljust(56) + f"  {v}")
+
+    # What a typed-in count costs against the count each corpus would have chosen. The
+    # grid is the fixed-k arms above; the "single constant" is the one k with the best F1
+    # averaged over the corpora run, which is what a service shipping one number would ship.
+    fixed = ["top1", "top3", "top5", "top10"]
+    best_k = max(fixed, key=lambda m: np.mean([r["f1_horizon"][m] for r in results]))
+    print("\nThe cost of a single count (F1@horizon given up against each corpus's own best fixed k):\n")
+    print(f"{'dataset':10s} {'own best':>9s} {'F1':>7s} {'single ' + best_k:>12s} {'cut':>7s}")
+    print("-" * 50)
+    worst_const, worst_cut = 0.0, 0.0
+    for r in results:
+        own = max(fixed, key=lambda m: r["f1_horizon"][m])
+        top = r["f1_horizon"][own]
+        gc = top - r["f1_horizon"][best_k]
+        gx = max(0.0, top - r["f1_horizon"]["cut"])
+        worst_const, worst_cut = max(worst_const, gc), max(worst_cut, gx)
+        print(f"{r['dataset']:10s} {own:>9s} {top:7.3f} {gc:+12.3f} {gx:+7.3f}")
+    print(f"\nworst case: the single constant ({best_k}) gives up {worst_const:.3f}; "
+          f"the derived count gives up {worst_cut:.3f}")
+
+    pooled = np.concatenate([np.asarray(r["relevant_in_horizon"]) for r in results])
+    if pooled.size:
+        print(f"\nqueries carrying four or more relevant documents in their horizon: "
+              f"{int((pooled >= 4).sum())} of {pooled.size} scored ({100 * np.mean(pooled >= 4):.1f}%)")
+        for r in results:
+            a = np.asarray(r["relevant_in_horizon"])
+            if a.size:
+                print(f"  {r['dataset']:10s} {int((a >= 4).sum()):5d} of {a.size:5d} "
+                      f"({100 * np.mean(a >= 4):5.1f}%)")
 
     print("\nEvidence the reads carried:\n")
     print(f"{'dataset':10s} {'heads':>7s} {'found_gap':>11s} {'fell_back':>11s} {'seconds':>9s}")

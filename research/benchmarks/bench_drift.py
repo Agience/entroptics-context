@@ -49,7 +49,7 @@ def main(argv=None):
                     help="sentences taken from each source to build the context")
     ap.add_argument("--held", type=int, default=6,
                     help="held-out on-topic sentences per source. AUROC over t targets moves "
-                         "in steps of 1/(t/2)^2, so too few quantises the read: at 2 per "
+                         "in steps of 1/(t/2)^2, so too few quantizes the read: at 2 per "
                          "source and M=1 it can only take the values 0, .25, .5, .75, 1.")
     ap.add_argument("--min-sentences", type=int, default=20)
     ap.add_argument("--knn", type=int, default=5,

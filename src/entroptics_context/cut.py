@@ -6,7 +6,7 @@ The coherent modes of a raw candidate set denote *intrinsic* structure — the d
 shared directions, equivalently the outliers. Retrieval relevance is *extrinsic*: it
 is defined by the query, and a relevant item sits near the query rather than away from
 the crowd. Reading the candidate embeddings directly therefore selects the atypical
-items and never the gold; measured F1 **0.000**. Two other obvious routes fail too: an
+items and never the gold. Two other obvious routes fail too: an
 entropy-scale cut on the score distribution finds it too uniform to fold and correctly
 refuses, and word- or sub-query facets are cruder than the full-query cosine.
 
@@ -31,18 +31,19 @@ correct result rather than a shortfall. The screen's stated win condition is
 multi-modal relevance, and it has not been demonstrated on a real corpus.
 
 What the module *is* measured to buy is the derived count rather than an edge over
-cosine: the best single constant *k* gives up as much as 0.086 F1 against a corpus's
-own tuned *k*, where reading the count per query gives up at most 0.019. That is a
+cosine: across four BEIR corpora the best single constant *k* gives up as much as 0.130
+F1 against a corpus's own best fixed *k*, where reading the count per query gives up at
+most 0.020. That is a
 bound on the cost of having no constant to sweep, not a claim of superiority.
 
 It is precision-oriented and does not do bulk recall: the lock isolates one clean cluster
-above a gap, so it under-selects when recall is what is wanted. That has a measured price,
-and the price is the COUNT rather than the ranking. End to end on HotpotQA, 150 questions:
-handed the same number of paragraphs it derived, cosine scores the same answers (+0.000 at
-1.5B, -0.001 at 7B), so the selection is not the problem. Against a fixed top-5 it spends
-36% of the context tokens and costs 0.133 F1 with Qwen2.5-7B-Instruct, all of it because it
-keeps 2.1 paragraphs where a multi-hop answer needs two. Use a generous top-k, put this read
-downstream of it, and do not use it where the evidence spans passages.
+above a gap, so it under-selects when recall is what is wanted, and what that costs is
+the COUNT rather than the ranking. End to end on HotpotQA, 150 questions with
+Qwen2.5-1.5B-Instruct: handed the same number of paragraphs it derived, cosine scores the
+same answers (+0.000), so the selection is not the problem. Against a fixed top-5 it spends
+38% of the context tokens and scores -0.058 F1 [-0.123, +0.006], keeping 2.1 paragraphs
+where a multi-hop answer needs two. Use a generous top-k, put this read downstream of it,
+and where the evidence spans passages, set a floor on the count.
 
 This is a separate and weaker result than the claim in ``research/PAPER.md``, and it is
 separate from it. research/PAPER.md section 7 carries every row.
@@ -68,7 +69,7 @@ __all__ = [
 ]
 
 #: Added to every norm before dividing by it. Stated, not derived — a guard against
-#: dividing by a zero-length vector. The honest replacement is the forward error of the
+#: dividing by a zero-length vector. The sound replacement is the forward error of the
 #: summation actually performed, read off the frame's own dtype; it is not applied
 #: because ``|v| + 1e-9`` and ``|v| + tiny`` are different denominators and every
 #: downstream number would move.
@@ -141,7 +142,7 @@ def head_screen(item_embs, query_emb, heads: int) -> np.ndarray:
     * On **pure-random** pools — no planted relevance, nothing to find — about half of
       each column is zeroed, the rank moves in half the draws, and |dk| reaches 2.
 
-    So the degeneracy bites where there is no signal to read and not where there is.
+    So the degeneracy binds where there is no signal to read and not where there is.
 
     The obvious repair is measurably wrong. ``entroptics.occupied_modes`` — the rank
     edge read off the profile's own step, which needs no noise bulk — returns **k=1** on
@@ -203,7 +204,7 @@ def derive_heads(item_embs, lo: int | None = None, hi: int | None = None) -> int
     :data:`MIN_HEADS` and :data:`MAX_HEADS`. Passing either overrides the guard, not
     the derivation.
 
-    Rows are normalised to unit length first. Without it the count is read off a
+    Rows are normalized to unit length first. Without it the count is read off a
     spectrum dominated by whichever items happen to have the largest norm, and the head
     count then tracks embedding magnitude rather than the set's structure.
     """
@@ -353,9 +354,9 @@ def select_by_cosine(item_embs, query_emb) -> np.ndarray:
     The best fixed *k* is a different number on each corpus, so a service that answers
     against more than one of them, or against a corpus whose content moves, has no single
     right constant to ship. This reads the number per query instead, and the measured
-    consequence is a **bound on what that costs**: across five BEIR corpora the best single
-    constant gives up as much as 0.086 F1 against a corpus's own tuned *k*, where this gives
-    up at most 0.019. ``research/PAPER.md`` has the measurement.
+    consequence is a **bound on what that costs**: across four BEIR corpora the best single
+    constant gives up as much as 0.130 F1 against a corpus's own best fixed *k*, where this
+    gives up at most 0.020. ``research/PAPER.md`` has the measurement.
 
     Where a constant is better
     --------------------------

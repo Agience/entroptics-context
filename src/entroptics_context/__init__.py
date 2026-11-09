@@ -18,13 +18,16 @@ Quick start
     suspect = most_anomalous(context_embeddings) # the item furthest outside them
     score = coherence(answer_embedding, context_embeddings)
 
-When it beats a centroid
-------------------------
-Exactly when the context spans **more than one source**, and the margin grows with the
-number of sources. On real prompt injections the edge over a centroid is +0.069, +0.131 and
-+0.174 AUROC at 2, 3 and 5 sources; on the on-topic decision, +0.038, +0.084 and +0.155. The
+Where it beats a centroid
+-------------------------
+The margin grows with the number of sources the context spans, every interval excluding
+zero apart from the one tie: at one source it is +0.007 on injections and a tie on the
+on-topic decision. On real prompt injections the
+edge over a centroid is +0.067, +0.119 and
++0.179 AUROC at 2, 3 and 5 sources; on the on-topic decision, +0.043, +0.088 and +0.141. The
 largest margin is on selection: where relevance spreads across several facets the derived cut
-holds F1 at 1.000 while a cosine cut falls to 0.000. research/PAPER.md has the construction
+holds F1 at 1.000 through four facets and at 0.915 and 0.711 at five and six, where a cosine
+cut falls to 0.000. research/PAPER.md has the construction
 and what every number was measured on.
 
 ``coherence`` reads topic coherence rather than factual correctness, and the anomaly reads
@@ -59,7 +62,7 @@ from .subspace import (
     subspace_overlap,
 )
 
-__version__ = "0.2.0"
+__version__ = "0.2.1"
 
 __all__ = [
     # modules

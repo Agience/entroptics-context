@@ -2,7 +2,7 @@
 name = "entroptics-context"
 license = "AGPL-3.0-only"
 license-files = ["LICENSE", "NOTICE", "COMMERCIAL_LICENSE.md"]
-version = "0.2.0"
+version = "0.2.1"
 description = "Read a multi-source LLM context as the subspace it resolves, not as a centroid: locate prompt injections and off-source answers, with no trained model and no tuned constant."
 readme = "README.md"
 requires-python = ">=3.11"
@@ -21,9 +21,9 @@ classifiers = [
     "Typing :: Typed",
 ]
 dependencies = [
-    "numpy>=1.24.0",
+    "numpy>=2.0",
 
-    "entroptics>=0.2.1",
+    "entroptics>=0.2.10",
 ]
 
 [project.urls]

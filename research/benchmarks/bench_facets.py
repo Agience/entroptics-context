@@ -7,10 +7,10 @@ multi-modal it is, and it ties at one mode.
 The contest is made fair by construction. The **same screen** ``W`` is fed to both
 sides — cosine is its row sum, the cut is its coherent-mode energy — and the **same
 parameter-free lock** (``top_break``) is applied to both. So the only thing under test
-is whether the screen precedes the lock. An earlier version of this result did not do
-that: the cosine side ran a crippled lock, it kept ~1.2 items where the cut kept ~3.6,
-and the reported "+0.038 win" was the lock rather than the screen. That is the single
-most important methodological note in this repository.
+is whether the screen precedes the lock. Give the two sides different locks and the
+edge measures the locks instead: a weaker lock on the cosine side keeps fewer items,
+and the difference in count reads as a win for the screen. Matching the lock is the
+single most important methodological choice in this repository.
 
 The construction. A gold row is strong on the heads of ONE facet and empty elsewhere;
 a distractor is weakly present on every head. As the facet count R grows a gold row's
@@ -20,8 +20,8 @@ gold rows sharing a facet remain a coherent mode.
 
 Run::
 
-    python -m benchmarks.bench_facets
-    python -m benchmarks.bench_facets --draws 100 --heads 32
+    python -m research.benchmarks.bench_facets
+    python -m research.benchmarks.bench_facets --draws 100 --heads 32
 """
 from __future__ import annotations
 
@@ -86,7 +86,7 @@ def main():
         cos, hc = sweep(R, args.draws, args.items, args.heads, args.gold, args.seed)
         d = hc - cos
         # Percentile bootstrap over draws — the edge is a mean over a small sample and
-        # quoting it without a spread is how "+0.038" got believed the first time.
+        # an edge quoted without its spread cannot be told apart from a tie.
         boot = np.array([np.random.default_rng(9000 + i).choice(d, len(d)).mean()
                          for i in range(2000)])
         lo, hi = np.percentile(boot, [2.5, 97.5])

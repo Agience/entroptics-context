@@ -139,11 +139,9 @@ def occupancy(M) -> float:
 
     This read and ``mantle.search.beacon.engine.occupancy_fraction`` agree exactly —
     measured over 60 real retrieval horizons, a maximum absolute difference of 0.0.
-    They diverged until 2026-09-02, when the library still centred before decomposing:
-    on a set of unit direction vectors the shared mean direction is the topic the set
-    is about, so de-meaning deleted the dominant mode and roughly doubled the fill.
-    That reached this package as twice the head count, and
-    therefore as a different cut.
+    It is not centred: on a set of unit direction vectors the shared mean direction is
+    the topic the set is about, and de-meaning would delete the dominant mode, roughly
+    double the fill, and reach this package as twice the head count and a different cut.
 
     NaN for a frame carrying no power: there is no fraction of active modes to report
     when no mode is active, and reporting ``1/n`` instead would be indistinguishable
