@@ -19,8 +19,8 @@ identifiers:
     value: "10.5281/zenodo.22313961"
     description: "Concept DOI: all versions"
   - type: doi
-    value: "10.5281/zenodo.23776376"
-    description: "Version DOI: 0.2.0"
+    value: "10.5281/zenodo.24074906"
+    description: "Version DOI: 0.2.1"
 keywords:
   - retrieval-augmented generation
   - context selection
