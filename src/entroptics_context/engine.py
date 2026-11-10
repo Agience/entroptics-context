@@ -10,6 +10,10 @@ What the engine is asked for
 =========================  ============================================================
 ``resolved_rank(M)``       how many directions ``M`` really has: singular values above
                            the derived noise floor. Whitened, native resolution.
+                           Floored at 1, for a caller that needs a basis.
+``resolved_count(M)``      the same count unfloored: 0 when nothing stands above the
+                           floor. The set reads, which add the mean direction
+                           themselves.
 ``raw_signal_power(W)``    each row's energy in the top-``K`` left singular modes of
                            the **raw** screen, ``K`` from ``resolved_rank``. The
                            retrieval path — see "two substrates" below.
@@ -55,6 +59,7 @@ from entroptics.reads import phi as _phi
 __all__ = [
     "CutUnavailable",
     "resolved_rank",
+    "resolved_count",
     "raw_signal_power",
     "occupancy",
     "focus",
@@ -113,7 +118,18 @@ def resolved_rank(M) -> int:
     engine reports 0 when it means 0, which is why this wrapper is where the floor
     lives and not somewhere it could be applied twice.
     """
-    return max(1, int(_read(M).K_signal[0]))
+    return max(1, resolved_count(M))
+
+
+def resolved_count(M) -> int:
+    """How many directions ``M`` has above the derived noise floor, 0 included.
+
+    The whitened frame centres each channel on its mean, so this counts the directions
+    about the mean. A caller that keeps the mean direction as a direction of its own
+    (:func:`entroptics_context.subspace.coherent_basis`) already has a basis at a count of
+    0, and flooring the count there would add a direction that is not above the floor.
+    """
+    return int(_read(M).K_signal[0])
 
 
 def raw_signal_power(W) -> np.ndarray:

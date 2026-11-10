@@ -2,21 +2,23 @@
 
 The read
 --------
-An injected instruction is a **foreign mode**: it does not lie in the coherent subspace the
-legitimate content spans. `subspace.anomaly` scores each item by the energy it carries
-*outside* that subspace, so the injection stands out for a structural reason rather than a
-lexical one — no keyword list, no classifier, no threshold, and no training.
+An injected instruction is a **foreign mode**: it lies in none of the sources the legitimate
+content spans. `subspace.anomaly` scores each item by the energy it carries outside every
+source, read with the item removed from its own, so the injection stands out for a
+structural reason rather than a lexical one: no keyword list, no classifier, no threshold,
+and no training.
 
-The baseline is the same question asked with one vector instead of a subspace: anomaly as
-distance from the centroid of the context.
+The baselines are distance from the centroid of the context, and distance from an item's k
+nearest neighbours in it.
 
 Why the topic count is the axis
 -------------------------------
 A centroid is a single direction, so it can only represent a context that points one way.
 Give it a context drawn from several sources and the centroid sits between them, in a
 direction no real item occupies — and legitimate-but-peripheral items then score as more
-foreign than the injection does. A subspace spans the sources instead, so the legitimate
-material lies *in* it however many topics it covers, and only the injection lies off it.
+foreign than the injection does. One subspace per source keeps the legitimate material
+inside its own source however many topics the context covers, and only the injection lies
+off every one.
 
 That is why this is measured against the number of sources in the context rather than at one
 setting. A retrieval-augmented context spanning several documents is the ordinary case, not a
@@ -38,7 +40,7 @@ import re
 
 import numpy as np
 
-from entroptics_context import anomaly, coherent_basis
+from entroptics_context import anomaly, coherent_basis, in_subspace_fraction, source_bases
 from entroptics_context.engine import CutUnavailable
 
 DEFAULT_ENCODER = "BAAI/bge-small-en-v1.5"
@@ -147,6 +149,7 @@ def main(argv=None):
     rows = []
     for M in Ms:
         sub_a, cen_a, knn_a, sub_t, cen_t, knn_t, Ks, sizes = ([] for _ in range(8))
+        ins_a = []
         for _ in range(args.trials):
             idx = rng.choice(len(arts), size=M, replace=False)
             legit = np.vstack([embs[a] for a in idx])
@@ -159,7 +162,7 @@ def main(argv=None):
                 continue
             centroid = E.mean(0)
             centroid = centroid / (np.linalg.norm(centroid) + 1e-12)
-            s_sub = anomaly(E)          # leave-one-out, the library's default
+            s_sub = anomaly(E)
             s_cen = 1.0 - (E @ centroid)
             # k-NN distance: the other standard unsupervised outlier score, and one that is
             # NOT a monotone transform of the centroid read. An item is scored by how far it
@@ -170,6 +173,11 @@ def main(argv=None):
             np.fill_diagonal(S, -np.inf)
             k = min(args.knn, len(E) - 1)
             s_knn = 1.0 - np.sort(S, axis=1)[:, -k:].mean(1)
+            # The same sources with no item removed from its own: each item is scored inside a
+            # span it helped build. Appendix A.1 reads this arm; it is not a library path.
+            bases = source_bases(E)
+            s_ins = np.array([1.0 - max(in_subspace_fraction(x, V) for V in bases) for x in E])
+            ins_a.append(auroc(s_ins, label))
             sub_a.append(auroc(s_sub, label))
             cen_a.append(auroc(s_cen, label))
             knn_a.append(auroc(s_knn, label))
@@ -189,7 +197,9 @@ def main(argv=None):
                      "edge": mm, "ci": [lo, hi],
                      "edge_vs_knn": km, "ci_vs_knn": [klo, khi],
                      "top1_subspace": float(np.mean(sub_t)),
-                     "top1_centroid": float(np.mean(cen_t))})
+                     "top1_centroid": float(np.mean(cen_t)),
+                     "in_set": float(np.mean(ins_a)),
+                     "in_set_vs_knn": list(boot(np.array(ins_a) - np.array(knn_a)))})
         print(f"{M:>8} {np.mean(Ks):>6.1f} {np.mean(sizes):>6.0f} | "
               f"{np.mean(sub_a):>10.3f} {np.mean(cen_a):>9.3f} {np.mean(knn_a):>7.3f} "
               f"{mm:>+8.3f} [{lo:+.3f},{hi:+.3f}] "

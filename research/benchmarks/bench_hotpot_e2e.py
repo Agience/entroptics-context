@@ -242,7 +242,11 @@ def main(argv=None) -> int:
                        "baseline_k": args.baseline_k, "means": m,
                        "f1_delta_vs_fixed_k": d_base, "ci_vs_fixed_k": [lo, hi],
                        "f1_delta_vs_matched": d_match, "ci_vs_matched": [mlo, mhi],
-                       "token_ratio": float(ratio)}, fh, indent=2)
+                       "token_ratio": float(ratio),
+                       "coherence_skipped": skipped,
+                       "coherence_right": float(coh[right].mean()) if right.any() else None,
+                       "coherence_wrong": float(coh[~right].mean()) if (~right).any() else None,
+                       "coherence_n": int(len(coh))}, fh, indent=2)
         print(f"wrote {args.json}")
     return 0
 

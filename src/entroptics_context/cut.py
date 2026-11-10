@@ -105,21 +105,6 @@ def _smallest_readable_head_count() -> int:
 #: head axis. Computed, and equal to 2.
 MIN_HEADS = _smallest_readable_head_count()
 
-#: The ceiling on the derived head count. Two bounds are taken together and the tighter
-#: wins. ``n_features // 2`` **is** derived — it is the geometry, since a head block
-#: narrower than two coordinates has a "cosine" carrying only a sign. ``64`` is
-#: **stated, not derived**, and it is the one that binds.
-#:
-#: It binds sooner than one might hope, and on structured input too: measured on
-#: retrieval-shaped pools the raw count is 18 at n=20, 37 at n=40 and **70 at n=80**, so
-#: 64 binds from a horizon of about 80 upward — not only on isotropic sets.
-#:
-#: It does not decide the answer. Swept across a 12x range of ceilings on the same pools,
-#: F1 is flat across hi = 16 / 32 / 64 / 128 / 192. So it is a guard, not a tuning knob
-#: wearing a guard's name.
-MAX_HEADS = 64
-
-
 def head_screen(item_embs, query_emb, heads: int) -> np.ndarray:
     """``(n, heads)`` — each item's per-head cosine to the query, block by block.
 
@@ -189,7 +174,7 @@ def signal_power(W) -> np.ndarray:
     return engine.raw_signal_power(W)
 
 
-def derive_heads(item_embs, lo: int | None = None, hi: int | None = None) -> int:
+def derive_heads(item_embs) -> int:
     """The head count, from the candidate set's own effective rank: ``H = round(occupancy * n)``.
 
     ``occupancy`` is ``2^{H_sv}/n``, the fraction of modes carrying the energy, so
@@ -200,20 +185,20 @@ def derive_heads(item_embs, lo: int | None = None, hi: int | None = None) -> int
     On LongMemEval this self-selects to about 16 per query, which is why a fixed 16 had
     looked like the best choice before it was derived.
 
-    ``lo`` and ``hi`` are not the same kind of number and are documented separately at
-    :data:`MIN_HEADS` and :data:`MAX_HEADS`. Passing either overrides the guard, not
-    the derivation.
+    Both bounds are derived. The floor is :data:`MIN_HEADS`, the engine's readability gate.
+    The ceiling is ``n_features // 2``, the geometry: a head block narrower than two
+    coordinates has a "cosine" carrying only a sign. On retrieval-shaped pools F1 is flat
+    across ceilings from 16 to 192, so no stated ceiling is needed to hold the answer.
 
     Rows are normalized to unit length first. Without it the count is read off a
     spectrum dominated by whichever items happen to have the largest norm, and the head
     count then tracks embedding magnitude rather than the set's structure.
     """
-    lo = MIN_HEADS if lo is None else int(lo)
+    lo = MIN_HEADS
     E = np.asarray(item_embs, dtype=np.float64)
     if E.ndim != 2 or min(E.shape) < 2:
         return lo
-    ceiling = MAX_HEADS if hi is None else int(hi)
-    ceiling = max(lo, min(ceiling, int(E.shape[1]) // 2))
+    ceiling = max(lo, int(E.shape[1]) // 2)
     En = E / (np.linalg.norm(E, axis=1, keepdims=True) + _UNIT_NORM_FLOOR)
     occ = engine.occupancy(En)
     if not np.isfinite(occ):                 # a set carrying no power has no active modes
@@ -221,11 +206,11 @@ def derive_heads(item_embs, lo: int | None = None, hi: int | None = None) -> int
     return int(max(lo, min(ceiling, round(occ * E.shape[0]))))
 
 
-def select(item_embs, query_emb, heads: int | None = None) -> np.ndarray:
+def select(item_embs, query_emb) -> np.ndarray:
     """The adaptive cut: which of ``item_embs`` to keep for ``query_emb``, as indices.
 
-    ``heads`` is derived from the data when ``None``; pass an int only to override.
-    The lock is :func:`~entroptics_context.lock.top_break` on the per-item signal power —
+    The head count is derived from the data (:func:`derive_heads`). The lock is
+    :func:`~entroptics_context.lock.top_break` on the per-item signal power —
     the top cluster above the largest relative gap — so there is no fixed k, no MAD
     multiple and no threshold. The screen decides how many to keep, which is the entire
     difference between an adaptive cut and a top-k with extra steps.
@@ -242,35 +227,29 @@ def select(item_embs, query_emb, heads: int | None = None) -> np.ndarray:
     E = np.asarray(item_embs, dtype=np.float64)
     if len(E) <= 1:
         return np.arange(len(E))
-    H = derive_heads(E) if heads is None else int(heads)
-    power = signal_power(head_screen(E, query_emb, H))
+    power = signal_power(head_screen(E, query_emb, derive_heads(E)))
     keep, _ = top_break(power)
     return np.where(keep)[0]
 
 
-def select_with_info(
-    candidate_embeddings,
-    query_embedding,
-    *,
-    max_keep: int | None = None,
-    min_horizon: int = 8,
-) -> tuple[list[int], dict[str, Any]]:
+def select_with_info(candidate_embeddings, query_embedding) -> tuple[list[int], dict[str, Any]]:
     """:func:`select`, power-descending, with the evidence for what it did.
 
     Args:
         candidate_embeddings: ``(n, d)`` — a bounded cosine horizon.
         query_embedding: ``(d,)``.
-        max_keep: a hard ceiling on the number kept, for a token budget. Reported as
-            ``capped``: a truncated selection is not the cut's answer and must not be
-            read as one.
-        min_horizon: below this many candidates, decline and hand back everything with
-            ``fell_back`` set. This is **caller policy, not a property of the read** —
-            the engine's own gate is ``n >= 2``. 8 is the value the live pilot ships;
-            it says how much structure a caller wants present before it trusts a cut,
-            and a caller with a different appetite should pass a different number.
 
     Returns ``(kept_indices, info)``. ``info`` carries ``horizon``, ``heads_derived``,
-    ``kept``, ``rel_gap``, ``separability``, ``found_gap``, ``fell_back``, ``capped``.
+    ``kept``, ``rel_gap``, ``separability``, ``found_gap``, ``fell_back``.
+
+    ``fell_back`` means the read did not happen: one candidate, or a screen the engine
+    cannot read. Every candidate is handed back, as :func:`select` does for one candidate.
+    The selection is the cut's answer whole; a caller with a token budget truncates the
+    power-descending list itself.
+
+    From two candidates up the read is taken and the cut applied. On a pool of two or three
+    the spectrum has that many values, so ``rel_gap`` and ``separability`` describe a split
+    of two or three numbers and carry little evidence; the cut is still the read's answer.
 
     ``separability`` is the evidence that there was anything to cut: eta^2 of the best
     two-population split of the signal power, 0.0 for one population. It discriminates
@@ -285,27 +264,26 @@ def select_with_info(
     n = len(E)
     info: dict[str, Any] = {
         "horizon": n, "heads_derived": 0, "kept": 0, "rel_gap": None,
-        "separability": None, "found_gap": False, "fell_back": False, "capped": False,
+        "separability": None, "found_gap": False, "fell_back": False,
     }
     if n == 0:
         return [], info
-    if n < min_horizon:
+    heads = derive_heads(E)
+    try:
+        if n < 2:
+            raise CutUnavailable("one candidate has no spectrum")
+        power = signal_power(head_screen(E, query_embedding, heads))
+    except CutUnavailable:
         info["fell_back"] = True
         info["kept"] = n
         return list(range(n)), info
-
-    heads = derive_heads(E)
     info["heads_derived"] = heads
-    power = signal_power(head_screen(E, query_embedding, heads))
     keep_mask, rel_gap = top_break(power)
     info["rel_gap"] = float(rel_gap)
     info["separability"] = round(engine.separability(power), 4)
     order = np.argsort(power)[::-1]
     kept = [int(i) for i in order if keep_mask[i]]
     info["found_gap"] = len(kept) < n
-    if max_keep is not None and len(kept) > max_keep:
-        info["capped"] = True
-        kept = kept[:max_keep]
     info["kept"] = len(kept)
     return kept, info
 

@@ -162,7 +162,7 @@ def cosine_lock(sims: np.ndarray) -> np.ndarray:
     return np.where(keep)[0]
 
 
-def run_dataset(name, model, *, horizon, split, batch_size, min_horizon, cache_dir=None):
+def run_dataset(name, model, *, horizon, split, batch_size, cache_dir=None):
     print(f"  {name}: loading", flush=True)
     doc_ids, doc_texts, q_ids, q_texts, relevant = load_beir(name, split)
     print(f"    {len(doc_texts)} docs, {len(q_ids)} judged queries", flush=True)
@@ -208,7 +208,7 @@ def run_dataset(name, model, *, horizon, split, batch_size, min_horizon, cache_d
             "top10": np.arange(min(10, B)),
             "cosine+lock": cosine_lock(pool_sims),
         }
-        idx, info = select_with_info(D[top], Q[i], min_horizon=min_horizon)
+        idx, info = select_with_info(D[top], Q[i])
         picks["cut"] = np.asarray(idx, dtype=int)
         fell_back += bool(info["fell_back"])
         found_gap += bool(info["found_gap"])
@@ -343,7 +343,6 @@ def main(argv=None):
                     help="candidate pool size from the dense retriever (default 50)")
     ap.add_argument("--split", default="test")
     ap.add_argument("--batch-size", type=int, default=128)
-    ap.add_argument("--min-horizon", type=int, default=8)
     ap.add_argument("--cache-dir", default=None,
                     help="reuse encoded corpora across runs; encoding is the whole cost")
     ap.add_argument("--seed", type=int, default=0, help="bootstrap seed only")
@@ -359,8 +358,7 @@ def main(argv=None):
     for name in args.datasets:
         try:
             results.append(run_dataset(name, model, horizon=args.horizon, split=args.split,
-                                       batch_size=args.batch_size, min_horizon=args.min_horizon,
-                                       cache_dir=args.cache_dir))
+                                       batch_size=args.batch_size, cache_dir=args.cache_dir))
         except Exception as e:                                   # noqa: BLE001 — report, do not abort the sweep
             print(f"  {name}: FAILED — {type(e).__name__}: {e}", file=sys.stderr, flush=True)
 

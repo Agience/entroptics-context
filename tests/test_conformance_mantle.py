@@ -99,8 +99,11 @@ def test_the_head_count_that_follows_from_it_agrees():
     """Agreement matters because it reaches the selection. The head count is
     ``round(occupancy * n)``, so a divergence in the fraction becomes a different screen."""
     from entroptics_context.cut import derive_heads
+    mantle_cut = pytest.importorskip("mantle.search.beacon.cut")
     rng = np.random.default_rng(3)
-    for E in horizons(rng, count=15):
-        theirs = int(max(2, min(64, round(float(mantle.occupancy_fraction(
-            E / (np.linalg.norm(E, axis=1, keepdims=True) + 1e-9))) * E.shape[0]))))
-        assert derive_heads(E) == theirs, (derive_heads(E), theirs)
+    frames = horizons(rng, count=15)
+    # Isotropic pools: at n = 80, d = 64 the width ceiling decides the count (raw 54, kept 32);
+    # at d = 384 the raw count passes 64 (72 at n = 80, 154 at n = 200) and stays below it.
+    frames += [rng.standard_normal((n, d)) for n, d in ((80, 64), (80, 384), (200, 384))]
+    for E in frames:
+        assert derive_heads(E) == mantle_cut.derive_heads(E), E.shape

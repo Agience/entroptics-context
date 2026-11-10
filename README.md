@@ -10,17 +10,18 @@
 
 Paper: [research/PAPER.pdf](https://github.com/Agience/entroptics-context/blob/main/research/PAPER.pdf) (two-column; LaTeX source in [research/PAPER.tex](https://github.com/Agience/entroptics-context/blob/main/research/PAPER.tex), Markdown in [research/PAPER.md](https://github.com/Agience/entroptics-context/blob/main/research/PAPER.md)).
 
-Read the context as the directions it resolves, and the selection follows from the data.
+Read the context as the sources it resolves, and the selection follows from the data.
 
 A language model's context is assembled from several sources at once: a retrieval-augmented
 prompt, an agent scratchpad, a long conversation. The decisions made about it — how many
 retrieved items to keep, which of them to trust, whether an answer stayed on its evidence — are
 conventionally made with one number per item against one summary of the whole.
 
-This reads the context as the K directions it resolves above its own noise floor, using the
-[`entroptics`](https://github.com/Agience/entroptics) instrument, and makes each of those
-decisions from that span. K is counted from the data: nothing is trained, no threshold is set,
-and no constant is fitted per corpus.
+This reads the context as the sources it spans, each one the directions it resolves above its
+own noise floor, using the [`entroptics`](https://github.com/Agience/entroptics) instrument,
+and makes each of those decisions from those spans. The sources and their directions are
+counted from the data: nothing is trained, no threshold is set, no constant is fitted per
+corpus, and no function takes an optional argument.
 
 ---
 
@@ -44,29 +45,31 @@ articles, against a centroid and against a k-nearest-neighbour detector:
 
 | sources | **entroptics** | centroid | k-NN | vs centroid | vs k-NN |
 |---|---|---|---|---|---|
-| 1 | **0.991** | 0.983 | 0.984 | +0.007 [+0.004, +0.012] | **+0.007** [+0.004, +0.010] |
-| 2 | **0.969** | 0.902 | 0.959 | +0.067 [+0.053, +0.082] | **+0.010** [+0.005, +0.016] |
-| 3 | **0.952** | 0.833 | 0.947 | +0.119 [+0.098, +0.140] | +0.004 [−0.003, +0.012] |
-| 5 | 0.897 | 0.718 | 0.917 | +0.179 [+0.154, +0.205] | −0.020 [−0.030, −0.011] |
+| 1 | **0.988** | 0.983 | 0.984 | +0.005 [+0.000, +0.010] | **+0.005** [+0.001, +0.008] |
+| 2 | **0.972** | 0.902 | 0.959 | +0.070 [+0.055, +0.087] | **+0.013** [+0.008, +0.019] |
+| 3 | **0.967** | 0.833 | 0.947 | +0.134 [+0.111, +0.157] | **+0.019** [+0.013, +0.026] |
+| 5 | **0.941** | 0.718 | 0.917 | +0.223 [+0.192, +0.254] | **+0.024** [+0.016, +0.032] |
 
-The margin over a centroid grows from +0.007 to +0.179 as sources multiply. On the question an
-operator asks — which item do I open first — entroptics has the highest rate at every source
-count as point estimates, though at three sources k-NN is within 0.015 of it: 0.795 / 0.465 / 0.315 / 0.140 against
-the centroid's 0.735 / 0.250 / 0.145 / 0.030 and k-NN's 0.720 / 0.365 / 0.300 / 0.120, more than four times the centroid's hit rate at five sources from a pool
-of 191 items.
+The margin over a centroid grows from +0.005 to +0.223 as sources multiply, and the margin over
+k-NN from +0.005 to +0.024, every k-NN interval excluding zero. On the question an operator
+asks, which item to open first, entroptics has the highest rate at every source count:
+0.785 / 0.450 / 0.410 / 0.175 against the centroid's 0.735 / 0.250 / 0.145 / 0.030 and k-NN's
+0.720 / 0.365 / 0.300 / 0.120, almost six times the centroid's hit rate at five sources from a
+pool of 191 items.
 
 **Whether a continuation belongs.** Held-out on-topic sentences against sentences from a
 different article:
 
-| sources | **entroptics** | centroid | vs centroid |
-|---|---|---|---|
-| 1 | 0.961 | 0.960 | +0.000 [−0.002, +0.003] |
-| 2 | **0.933** | 0.890 | **+0.043** [+0.037, +0.051] |
-| 3 | **0.915** | 0.827 | **+0.088** [+0.077, +0.098] |
-| 5 | **0.879** | 0.738 | **+0.141** [+0.130, +0.153] |
+| sources | **entroptics** | centroid | k-NN | vs centroid | vs k-NN |
+|---|---|---|---|---|---|
+| 1 | 0.959 | 0.960 | 0.966 | −0.002 [−0.007, +0.004] | −0.007 [−0.012, −0.003] |
+| 2 | 0.946 | 0.890 | 0.948 | **+0.056** [+0.046, +0.067] | −0.002 [−0.007, +0.003] |
+| 3 | 0.937 | 0.827 | 0.936 | **+0.110** [+0.096, +0.123] | +0.001 [−0.003, +0.004] |
+| 5 | 0.910 | 0.738 | 0.909 | **+0.172** [+0.158, +0.187] | +0.001 [−0.003, +0.005] |
 
 The same growth from an independent task: the centroid falls 0.960 → 0.738 as the context
-spreads while entroptics holds 0.961 → 0.879. On this task k-NN leads entroptics by 0.005–0.030.
+spreads while entroptics holds 0.959 → 0.910. Against k-NN it ties from two sources up and
+trails by 0.007 at one.
 
 ```bash
 python -m research.benchmarks.bench_facets       # runs on CPU in seconds, no corpus
@@ -81,15 +84,16 @@ construction, the real-corpus results on BEIR and HotpotQA, and every number wit
 ## Use it
 
 ```python
-from entroptics_context import coherent_basis, in_subspace_fraction, most_anomalous, coherence
+from entroptics_context import source_bases, most_anomalous, coherence
 
-V, K = coherent_basis(context_embeddings)      # the K directions the context resolves
-suspect = most_anomalous(context_embeddings)   # the item furthest outside them
+sources = source_bases(context_embeddings)     # one subspace per source the context spans
+suspect = most_anomalous(context_embeddings)   # the item furthest outside every source
 score   = coherence(answer_embedding, context_embeddings)   # is this still on its sources?
 ```
 
-`K` is read from the data — the count of singular values standing above the derived noise
-floor — so nothing is chosen. `context_embeddings` are the ones your pipeline already computed
+The number of sources and each one's directions are read from the data, from the singular
+values standing above the derived noise floor, so nothing is chosen and no function takes an
+optional argument. `context_embeddings` are the ones your pipeline already computed
 for retrieval; no additional model call is made.
 
 **These are scores and rankings, not verdicts.** `most_anomalous` localizes the item worth
@@ -103,7 +107,7 @@ pip install entroptics-context
 ```
 
 [Python 3.11](https://www.python.org/downloads/) or later. Runtime dependencies are numpy and
-[`entroptics` 0.2.10](https://pypi.org/project/entroptics/) or later, nothing else. No encoder, no torch, no corpus: the vectors are yours, and the package never
+[`entroptics` 0.2.12](https://pypi.org/project/entroptics/) or later, nothing else. No encoder, no torch, no corpus: the vectors are yours, and the package never
 downloads anything.
 
 Working on it, or reproducing the tables:
@@ -129,7 +133,7 @@ research/
     bench_hotpot_e2e  end to end with a language model answering.
 src/entroptics_context/
   engine.py       the one seam onto `entroptics`. Nothing else imports it.
-  subspace.py     coherent basis, in-subspace fraction, anomaly, coherence.
+  subspace.py     coherent basis, the sources a set spans, anomaly, coherence.
   lock.py         gap_split / top_break — where a salience spectrum stops.
   cut.py          the retrieval budget: a query-relative screen, and the lock on cosine.
 tests/            the suite, including the structural guards that read prose
@@ -159,7 +163,7 @@ the count.
 
 **Coherence reads topic, not factual correctness.** A wrong-but-on-topic answer reads as
 coherent. On the 88 of those questions that kept more than one paragraph, right answers scored
-0.413 and wrong ones 0.417.
+0.432 and wrong ones 0.420.
 Use it for off-source and lost-thread monitoring, not as a fact checker.
 
 ## Built on entroptics

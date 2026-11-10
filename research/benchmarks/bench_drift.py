@@ -2,20 +2,21 @@
 
 The read
 --------
-`subspace.coherence` asks how much of a target lies inside the coherent subspace its context
-occupies. On-topic material lies in it; a continuation that has wandered does not. Nothing is
-trained and no threshold is set — the subspace is the K directions the context itself resolves
-above its own noise floor.
+`subspace.coherence` asks how much of a target lies inside the context source it fits best.
+On-topic material lies in one of them; a continuation that has wandered lies in none. Nothing
+is trained and no threshold is set: the sources and each one's subspace are what the context
+itself resolves above its own noise floor.
 
-The baseline is the same question asked with one vector: cosine to the context's centroid.
+The baselines are the same question asked with one vector, cosine to the context's centroid,
+and asked locally, mean similarity to the k nearest context items.
 
 Why the source count is the axis
 --------------------------------
 A centroid can only point one way. Given a context assembled from several documents it sits
 between them, in a direction none of them occupies, and its distance to a legitimate item
-then grows with the spread of the context rather than with anything about the item. A
-subspace spans the sources instead, so on-topic material stays inside it however many topics
-the context covers.
+then grows with the spread of the context rather than with anything about the item. One
+subspace per source keeps on-topic material inside its own source however many topics the
+context covers.
 
 A retrieval-augmented context built from several documents, or a conversation that has
 covered several subjects, is the ordinary case. Measuring only at one source measures the
@@ -33,7 +34,7 @@ import json
 
 import numpy as np
 
-from entroptics_context import coherent_basis, in_subspace_fraction
+from entroptics_context import coherence, coherent_basis, in_subspace_fraction, source_bases
 from entroptics_context.engine import CutUnavailable
 from research.benchmarks.bench_injection import articles, auroc, boot
 
@@ -78,7 +79,8 @@ def main(argv=None):
     print("-" * 74)
     rows = []
     for M in Ms:
-        sub, cen, knn, Ks, sizes = [], [], [], [], []
+        sub, cen, knn, Ks, srcs, sizes = [], [], [], [], [], []
+        one = []
         for _ in range(args.trials):
             idx = rng.choice(len(arts), size=M + 1, replace=False)
             ctx_src, off_src = idx[:M], idx[M]
@@ -94,14 +96,15 @@ def main(argv=None):
             if len(off) == 0:
                 continue
             try:
-                V, K = coherent_basis(C)
+                _, K = coherent_basis(C)
+                n_src = len(source_bases(C))
             except CutUnavailable:
                 continue
             centroid = C.mean(0)
             centroid = centroid / (np.linalg.norm(centroid) + 1e-12)
             T = np.vstack([on, off])
             label = np.r_[np.ones(len(on), bool), np.zeros(len(off), bool)]
-            s_sub = np.array([in_subspace_fraction(t, V) for t in T])
+            s_sub = np.array([coherence(t, C) for t in T])
             s_cen = T @ centroid
             # k-NN: the same target scored by its similarity to the k nearest CONTEXT items.
             # A local baseline, so it carries no penalty for a context that spans topics.
@@ -110,16 +113,24 @@ def main(argv=None):
             sub.append(auroc(s_sub, label))
             cen.append(auroc(s_cen, label))
             knn.append(auroc(s_knn, label))
+            # One span over every source, the read of PAPER section 2's first half. Section 6
+            # reads this arm; it is not a library path.
+            V, _ = coherent_basis(C)
+            one.append(auroc(np.array([in_subspace_fraction(t, V) for t in T]), label))
             Ks.append(K)
+            srcs.append(n_src)
             sizes.append(len(C))
         d = np.array(sub) - np.array(cen)
         mm, lo, hi = boot(d)
         km, klo, khi = boot(np.array(sub) - np.array(knn))
-        rows.append({"M": M, "modes": float(np.mean(Ks)), "n": len(sub),
+        rows.append({"M": M, "modes": float(np.mean(Ks)), "sources": float(np.mean(srcs)),
+                     "n": len(sub),
                      "subspace": float(np.mean(sub)), "centroid": float(np.mean(cen)),
                      "knn": float(np.mean(knn)),
                      "edge": mm, "ci": [lo, hi],
-                     "edge_vs_knn": km, "ci_vs_knn": [klo, khi]})
+                     "edge_vs_knn": km, "ci_vs_knn": [klo, khi],
+                     "one_span": float(np.mean(one)),
+                     "one_span_vs_knn": list(boot(np.array(one) - np.array(knn)))})
         print(f"{M:>8} {np.mean(Ks):>6.1f} {np.mean(sizes):>5.0f} | "
               f"{np.mean(sub):>10.3f} {np.mean(cen):>9.3f} {np.mean(knn):>7.3f} "
               f"{mm:>+8.3f} [{lo:+.3f},{hi:+.3f}] "
