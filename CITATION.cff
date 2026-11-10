@@ -11,16 +11,16 @@ authors:
 repository-code: "https://github.com/Agience/entroptics-context"
 url: "https://agience.ai"
 license: AGPL-3.0-only
-version: 0.2.1
+version: 0.3.0
 doi: "10.5281/zenodo.22313961"
-date-released: "2026-11-09"
+date-released: "2026-11-10"
 identifiers:
   - type: doi
     value: "10.5281/zenodo.22313961"
     description: "Concept DOI: all versions"
   - type: doi
-    value: "10.5281/zenodo.24074906"
-    description: "Version DOI: 0.2.1"
+    value: "10.5281/zenodo.24114841"
+    description: "Version DOI: 0.3.0"
 keywords:
   - retrieval-augmented generation
   - context selection
