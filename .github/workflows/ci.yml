@@ -9,12 +9,13 @@ name: CI
 on:
   push:
     branches: [main]
+    paths-ignore: [CITATION.cff]        # a DOI edit cannot change what CI tests
   pull_request:
     branches: [main]
 
 concurrency:                       # cancel superseded runs on the same ref
   group: ci-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}   # every main commit gets a full result
 
 jobs:
   # numpy + entroptics + pytest, which is the whole default install. No model, no corpus,
